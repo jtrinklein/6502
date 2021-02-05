@@ -1,0 +1,7 @@
+.vscode/
+*.dSYM/
+*.o
+bin/
+build/
+unit-tests.cpp
+AllTests.txt
