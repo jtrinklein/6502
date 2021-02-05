@@ -8,8 +8,8 @@ public:
     CPU*  cpu;
     Mem* mem;
     static constexpr Byte opcode = 0xA9;
-    static constexpr Byte op_cycles = 2;
     static constexpr Byte op_size = 2;
+    static constexpr Byte op_cycles = 2;
     static constexpr Word program_start = 0x8000;
 
     void setUp() {

@@ -8,8 +8,9 @@ public:
     CPU*  cpu;
     Mem* mem;
     static constexpr Byte opcode = 0xB1;
-    static constexpr Byte op_cycles = 5;
     static constexpr Byte op_size = 2;
+    static constexpr Byte op_cycles = 5;
+
     void setUp() {
         mem= new Mem();
         cpu = new CPU(mem);
