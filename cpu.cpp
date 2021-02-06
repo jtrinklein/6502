@@ -77,10 +77,35 @@ static constexpr Byte INS_LDY_ZPX = 0xB4;
 static constexpr Byte INS_LDY_ABS = 0xAC;
 static constexpr Byte INS_LDY_ABSX = 0xBC;
 
+/* LSR
+Each of the bits in A or M is shift one place to the right.
+The bit that was in bit 0 is shifted into the carry flag.
+Bit 7 is set to zero. 
+
+For mem operations: data is loaded into accumulator, shifted, then written back to memory
+*/
+static constexpr Byte INS_LSR_A  = 0x4A;
+static constexpr Byte INS_LSR_ZP = 0x46;
+static constexpr Byte INS_LSR_ZPX = 0x56;
+static constexpr Byte INS_LSR_ABS = 0x4E;
+static constexpr Byte INS_LSR_ABSX = 0x5E;
+
+
 #define SET_LOAD_REG_FLAGS(v) do { \
     Zero = v == 0;\
     Negative = (v & 0x80) != 0;\
     } while(false)
+
+#define SET_LSR_FLAGS(v) SET_LOAD_REG_FLAGS(v)
+
+#define DO_LSR(x) do {          \
+        Byte newC = x & 0x01;   \
+        x = (x >> 1);           \
+        if (Carry) {            \
+            x += 0x80;          \
+        }                       \
+        Carry = newC;           \
+    }while(false)
 
 u32 CPU::RunOneInstruction() {
     
@@ -258,6 +283,55 @@ u32 CPU::RunOneInstruction() {
                 return 5;
             }
             return 4;
+        }
+        case INS_LSR_A:
+        {
+            DO_LSR(A);
+            
+            SET_LSR_FLAGS(A);
+            return 2;
+        }
+        case INS_LSR_ZP:
+        {
+            Word addr = 0x0000 + mem->ReadByte(PC++);
+            A = mem->ReadByte(addr);
+            DO_LSR(A);
+            mem->WriteByte(addr, A);
+            SET_LSR_FLAGS(A);
+            return 5;
+        }
+        case INS_LSR_ZPX:
+        {
+            Byte offset = mem->ReadByte(PC++);
+            Word addr = 0x0000 + (X + offset) & 0xFF;
+            A = mem->ReadByte(addr);
+
+            DO_LSR(A);
+            mem->WriteByte(addr, A);
+            SET_LSR_FLAGS(A);
+            return 6;
+        }
+        case INS_LSR_ABS:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            A = mem->ReadByte(addr);
+
+            DO_LSR(A);
+            mem->WriteByte(addr, A);
+            SET_LSR_FLAGS(A);
+            return 6;
+        }
+        case INS_LSR_ABSX:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            A = mem->ReadByte(addr + X);
+
+            DO_LSR(A);
+            mem->WriteByte(addr + X, A);
+            SET_LSR_FLAGS(A);
+            return 7;
         }
         default:
         {
