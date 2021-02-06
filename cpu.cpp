@@ -55,6 +55,7 @@ void CPU::Reset() {
     */
 }
 
+/* LDA */
 static constexpr Byte INS_LDA_IM = 0xA9;
 static constexpr Byte INS_LDA_ZP = 0xA5;
 static constexpr Byte INS_LDA_ZPX = 0xB5;
@@ -63,10 +64,16 @@ static constexpr Byte INS_LDA_ABSX = 0xBD;
 static constexpr Byte INS_LDA_ABSY = 0xB9;
 static constexpr Byte INS_LDA_INDX = 0xA1;
 static constexpr Byte INS_LDA_INDY = 0xB1;
+/* LDX */
+static constexpr Byte INS_LDX_IM = 0xA2;
+static constexpr Byte INS_LDX_ZP = 0xA6;
+static constexpr Byte INS_LDX_ZPY = 0xB6;
+static constexpr Byte INS_LDX_ABS = 0xAE;
+static constexpr Byte INS_LDX_ABSY = 0xBE;
 
-#define LDA_SET_FLAGS() do { \
-    Zero = A == 0;\
-    Negative = (A & 0x80) != 0;\
+#define SET_LOAD_REG_FLAGS(v) do { \
+    Zero = v == 0;\
+    Negative = (v & 0x80) != 0;\
     } while(false)
 
 u32 CPU::RunOneInstruction() {
@@ -76,7 +83,7 @@ u32 CPU::RunOneInstruction() {
         case INS_LDA_IM:
         {
             A = mem->ReadByte(PC++);
-            LDA_SET_FLAGS();
+            SET_LOAD_REG_FLAGS(A);
             return 2;
         }
         case INS_LDA_ZP:
@@ -84,7 +91,7 @@ u32 CPU::RunOneInstruction() {
             Word addr = 0x0000 + mem->ReadByte(PC++);
             A = mem->ReadByte(addr);
 
-            LDA_SET_FLAGS();
+            SET_LOAD_REG_FLAGS(A);
             return 3;
         }
         case INS_LDA_ZPX:
@@ -93,7 +100,7 @@ u32 CPU::RunOneInstruction() {
             Word addr = 0x0000 + (X + offset) & 0xFF;
             A = mem->ReadByte(addr);
 
-            LDA_SET_FLAGS();
+            SET_LOAD_REG_FLAGS(A);
             return 4;
         }
         case INS_LDA_ABS:
@@ -102,7 +109,7 @@ u32 CPU::RunOneInstruction() {
             PC += 2;
             A = mem->ReadByte(addr);
 
-            LDA_SET_FLAGS();
+            SET_LOAD_REG_FLAGS(A);
             return 4;
         }
         case INS_LDA_ABSX:
@@ -111,7 +118,7 @@ u32 CPU::RunOneInstruction() {
             PC += 2;
             A = mem->ReadByte(addr + X);
 
-            LDA_SET_FLAGS();
+            SET_LOAD_REG_FLAGS(A);
             if ((((addr & 0xFF) + X ) & 0x100) == 0x100) {
                 return 5;
             }
@@ -123,7 +130,7 @@ u32 CPU::RunOneInstruction() {
             PC += 2;
             A = mem->ReadByte(addr + Y);
 
-            LDA_SET_FLAGS();
+            SET_LOAD_REG_FLAGS(A);
             if ((((addr & 0xFF) + Y ) & 0x100) == 0x100) {
                 return 5;
             }
@@ -136,7 +143,7 @@ u32 CPU::RunOneInstruction() {
             addr = mem->ReadWord(addr);
             A = mem->ReadByte(addr);
 
-            LDA_SET_FLAGS();
+            SET_LOAD_REG_FLAGS(A);
             return 6;
         }
         case INS_LDA_INDY:
@@ -152,11 +159,55 @@ u32 CPU::RunOneInstruction() {
             // set a to value located at final addr
             A = mem->ReadByte(addr + Y);
 
-            LDA_SET_FLAGS();
+            SET_LOAD_REG_FLAGS(A);
             if ((((addr & 0xFF) + Y ) & 0x100) == 0x100) {
                 return 6;
             }
             return 5;
+        }
+        case INS_LDX_IM:
+        {
+            X = mem->ReadByte(PC++);
+            SET_LOAD_REG_FLAGS(X);
+            return 2;
+        }
+        case INS_LDX_ZP:
+        {
+            Word addr = 0x0000 + mem->ReadByte(PC++);
+            X = mem->ReadByte(addr);
+
+            SET_LOAD_REG_FLAGS(X);
+            return 3;
+        }
+        case INS_LDX_ZPY:
+        {
+            Byte offset = mem->ReadByte(PC++);
+            Word addr = 0x0000 + (Y + offset) & 0xFF;
+            X = mem->ReadByte(addr);
+
+            SET_LOAD_REG_FLAGS(X);
+            return 4;
+        }
+        case INS_LDX_ABS:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            X = mem->ReadByte(addr);
+
+            SET_LOAD_REG_FLAGS(X);
+            return 4;
+        }
+        case INS_LDX_ABSY:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            X = mem->ReadByte(addr + Y);
+
+            SET_LOAD_REG_FLAGS(X);
+            if ((((addr & 0xFF) + Y ) & 0x100) == 0x100) {
+                return 5;
+            }
+            return 4;
         }
         default:
         {
