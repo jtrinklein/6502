@@ -70,6 +70,12 @@ static constexpr Byte INS_LDX_ZP = 0xA6;
 static constexpr Byte INS_LDX_ZPY = 0xB6;
 static constexpr Byte INS_LDX_ABS = 0xAE;
 static constexpr Byte INS_LDX_ABSY = 0xBE;
+/* LDY */
+static constexpr Byte INS_LDY_IM = 0xA0;
+static constexpr Byte INS_LDY_ZP = 0xA4;
+static constexpr Byte INS_LDY_ZPX = 0xB4;
+static constexpr Byte INS_LDY_ABS = 0xAC;
+static constexpr Byte INS_LDY_ABSX = 0xBC;
 
 #define SET_LOAD_REG_FLAGS(v) do { \
     Zero = v == 0;\
@@ -205,6 +211,50 @@ u32 CPU::RunOneInstruction() {
 
             SET_LOAD_REG_FLAGS(X);
             if ((((addr & 0xFF) + Y ) & 0x100) == 0x100) {
+                return 5;
+            }
+            return 4;
+        }
+        case INS_LDY_IM:
+        {
+            Y = mem->ReadByte(PC++);
+            SET_LOAD_REG_FLAGS(Y);
+            return 2;
+        }
+        case INS_LDY_ZP:
+        {
+            Word addr = 0x0000 + mem->ReadByte(PC++);
+            Y = mem->ReadByte(addr);
+
+            SET_LOAD_REG_FLAGS(Y);
+            return 3;
+        }
+        case INS_LDY_ZPX:
+        {
+            Byte offset = mem->ReadByte(PC++);
+            Word addr = 0x0000 + (X + offset) & 0xFF;
+            Y = mem->ReadByte(addr);
+
+            SET_LOAD_REG_FLAGS(Y);
+            return 4;
+        }
+        case INS_LDY_ABS:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            Y = mem->ReadByte(addr);
+
+            SET_LOAD_REG_FLAGS(Y);
+            return 4;
+        }
+        case INS_LDY_ABSX:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            Y = mem->ReadByte(addr + X);
+
+            SET_LOAD_REG_FLAGS(Y);
+            if ((((addr & 0xFF) + X ) & 0x100) == 0x100) {
                 return 5;
             }
             return 4;
