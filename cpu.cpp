@@ -109,6 +109,9 @@ static constexpr Byte INS_STY_ZP   = 0x84;
 static constexpr Byte INS_STY_ZPX  = 0x94;
 static constexpr Byte INS_STY_ABS  = 0x8C;
 
+/* TAX */
+static constexpr Byte INS_TAX  = 0xAA;
+
 #define SET_LOAD_REG_FLAGS(v) do { \
     Zero = v == 0;\
     Negative = (v & 0x80) != 0;\
@@ -445,6 +448,12 @@ u32 CPU::RunOneInstruction() {
             PC += 2;
             mem->WriteByte(addr, Y);
             return 4;
+        }
+        case INS_TAX:
+        {
+            X = A;
+            SET_LOAD_REG_FLAGS(X);
+            return 2;
         }
         default:
         {
