@@ -109,23 +109,19 @@ static constexpr Byte INS_STY_ZP   = 0x84;
 static constexpr Byte INS_STY_ZPX  = 0x94;
 static constexpr Byte INS_STY_ABS  = 0x8C;
 
-/* TAX */
+/* Transfer between regs */
 static constexpr Byte INS_TAX  = 0xAA;
-
-/* TXA */
 static constexpr Byte INS_TXA  = 0x8A;
-
-/* TAY */
 static constexpr Byte INS_TAY  = 0xA8;
-
-/* TYA */
 static constexpr Byte INS_TYA  = 0x98;
-
-/* TSX */
 static constexpr Byte INS_TSX  = 0xBA;
-
-/* TXS */
 static constexpr Byte INS_TXS  = 0x9A;
+
+/* Set flags */
+static constexpr Byte INS_SEC  = 0x38;
+static constexpr Byte INS_SED  = 0xF8;
+static constexpr Byte INS_SEI  = 0x78;
+
 
 #define SET_LOAD_REG_FLAGS(v) do { \
     Zero = v == 0;\
@@ -500,6 +496,22 @@ u32 CPU::RunOneInstruction() {
             SET_LOAD_REG_FLAGS(SP);
             return 2;
         }
+        case INS_SEC:
+        {
+            Carry = 1;
+            return 2;
+        }
+        case INS_SED:
+        {
+            DecimalMode = 1;
+            return 2;
+        }
+        case INS_SEI:
+        {
+            InterruptDisable = 1;
+            return 2;
+        }
+
         default:
         {
             std::cout << "unknown opcode: 0x" << std::hex << (u32)opcode << std::endl;
