@@ -84,12 +84,20 @@ Bit 7 is set to zero.
 
 For mem operations: data is loaded into accumulator, shifted, then written back to memory
 */
-static constexpr Byte INS_LSR_A  = 0x4A;
-static constexpr Byte INS_LSR_ZP = 0x46;
-static constexpr Byte INS_LSR_ZPX = 0x56;
-static constexpr Byte INS_LSR_ABS = 0x4E;
+static constexpr Byte INS_LSR_A    = 0x4A;
+static constexpr Byte INS_LSR_ZP   = 0x46;
+static constexpr Byte INS_LSR_ZPX  = 0x56;
+static constexpr Byte INS_LSR_ABS  = 0x4E;
 static constexpr Byte INS_LSR_ABSX = 0x5E;
 
+/* STA */
+static constexpr Byte INS_STA_ZP   = 0x85;
+static constexpr Byte INS_STA_ZPX  = 0x95;
+static constexpr Byte INS_STA_ABS  = 0x8D;
+static constexpr Byte INS_STA_ABSX = 0x9D;
+static constexpr Byte INS_STA_ABSY = 0x99;
+static constexpr Byte INS_STA_INDX = 0x81;
+static constexpr Byte INS_STA_INDY = 0x91;
 
 #define SET_LOAD_REG_FLAGS(v) do { \
     Zero = v == 0;\
@@ -332,6 +340,63 @@ u32 CPU::RunOneInstruction() {
             mem->WriteByte(addr + X, A);
             SET_LSR_FLAGS(A);
             return 7;
+        }
+        case INS_STA_ZP:
+        {
+            Word addr = 0x0000 + mem->ReadByte(PC++);
+            mem->WriteByte(addr, A);
+            return 3;
+        }
+        case INS_STA_ZPX:
+        {
+            Word addr = 0x0000 + mem->ReadByte(PC++) + X;
+            mem->WriteByte(addr, A);
+            return 4;
+        }
+        case INS_STA_ABS:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            mem->WriteByte(addr, A);
+            return 4;
+        }
+        case INS_STA_ABSX:
+        {
+            Word addr = mem->ReadWord(PC) + X;
+            PC += 2;
+            mem->WriteByte(addr, A);
+            return 5;
+        }
+        case INS_STA_ABSY:
+        {
+            Word addr = mem->ReadWord(PC) + Y;
+            PC += 2;
+            mem->WriteByte(addr, A);
+            return 5;
+        }
+        case INS_STA_INDX:
+        {
+            Byte offset = mem->ReadByte(PC++);
+            Word addr = 0x0000 + (X + offset) & 0xFF;
+            addr = mem->ReadWord(addr);
+            mem->WriteByte(addr, A);
+
+            return 6;
+        }
+        case INS_STA_INDY:
+        {
+            // get zeropage addr
+            Byte offset = mem->ReadByte(PC++);
+            // get the abs addr at zp
+            Byte lsb = mem->ReadByte(0x0000 + offset);
+            Byte msb = mem->ReadByte((0x0000 + offset + 1) & 0xFF);
+            Word addr = (Word(msb) << 8) + lsb;
+
+            // add y to abs addr
+            // set a to value located at final addr
+            mem->WriteByte(addr + Y, A);
+
+            return 6;
         }
         default:
         {
