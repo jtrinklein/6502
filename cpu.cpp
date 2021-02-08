@@ -112,8 +112,20 @@ static constexpr Byte INS_STY_ABS  = 0x8C;
 /* TAX */
 static constexpr Byte INS_TAX  = 0xAA;
 
+/* TXA */
+static constexpr Byte INS_TXA  = 0x8A;
+
 /* TAY */
 static constexpr Byte INS_TAY  = 0xA8;
+
+/* TYA */
+static constexpr Byte INS_TYA  = 0x98;
+
+/* TSX */
+static constexpr Byte INS_TSX  = 0xBA;
+
+/* TXS */
+static constexpr Byte INS_TXS  = 0x9A;
 
 #define SET_LOAD_REG_FLAGS(v) do { \
     Zero = v == 0;\
@@ -458,10 +470,34 @@ u32 CPU::RunOneInstruction() {
             SET_LOAD_REG_FLAGS(X);
             return 2;
         }
+        case INS_TXA:
+        {
+            A = X;
+            SET_LOAD_REG_FLAGS(A);
+            return 2;
+        }
         case INS_TAY:
         {
             Y = A;
             SET_LOAD_REG_FLAGS(Y);
+            return 2;
+        }
+        case INS_TYA:
+        {
+            A = Y;
+            SET_LOAD_REG_FLAGS(A);
+            return 2;
+        }
+        case INS_TSX:
+        {
+            X = SP;
+            SET_LOAD_REG_FLAGS(X);
+            return 2;
+        }
+        case INS_TXS:
+        {
+            SP = X;
+            SET_LOAD_REG_FLAGS(SP);
             return 2;
         }
         default:
