@@ -104,6 +104,11 @@ static constexpr Byte INS_STX_ZP   = 0x86;
 static constexpr Byte INS_STX_ZPY  = 0x96;
 static constexpr Byte INS_STX_ABS  = 0x8E;
 
+/* STY */
+static constexpr Byte INS_STY_ZP   = 0x84;
+static constexpr Byte INS_STY_ZPX  = 0x94;
+static constexpr Byte INS_STY_ABS  = 0x8C;
+
 #define SET_LOAD_REG_FLAGS(v) do { \
     Zero = v == 0;\
     Negative = (v & 0x80) != 0;\
@@ -420,6 +425,25 @@ u32 CPU::RunOneInstruction() {
             Word addr = mem->ReadWord(PC);
             PC += 2;
             mem->WriteByte(addr, X);
+            return 4;
+        }
+        case INS_STY_ZP:
+        {
+            Word addr = 0x0000 + mem->ReadByte(PC++);
+            mem->WriteByte(addr, Y);
+            return 3;
+        }
+        case INS_STY_ZPX:
+        {
+            Word addr = 0x0000 + mem->ReadByte(PC++) + X;
+            mem->WriteByte(addr, Y);
+            return 4;
+        }
+        case INS_STY_ABS:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            mem->WriteByte(addr, Y);
             return 4;
         }
         default:
