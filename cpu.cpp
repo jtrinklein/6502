@@ -178,7 +178,8 @@ static constexpr Byte INS_BIT_ZP  = 0x24;
 static constexpr Byte INS_BIT_ABS = 0x2C;
 
 /* Branch Instructions */
-static constexpr Byte INS_BMI  = 0x30; // branch if minus 
+static constexpr Byte INS_BMI  = 0x30; // branch if minus (Negative is set)
+static constexpr Byte INS_BNE  = 0xD0; // branch if not equal (Zero is clear)
 
 
 
@@ -226,6 +227,14 @@ static constexpr Byte INS_BMI  = 0x30; // branch if minus
         Byte newC = (x & 0x80) == 0x80;     \
         x = (x << 1);                       \
         Carry = newC;                       \
+    }while(false)
+
+#define DO_RELATIVE_JUMP(r) do {    \
+        if (r & 0x80) {             \
+            PC -= (0x100 - r);      \
+        } else {                    \
+            PC += r;                \
+        }                           \
     }while(false)
 
 u32 CPU::RunOneInstruction() {
@@ -787,11 +796,23 @@ u32 CPU::RunOneInstruction() {
             Word old_pc(PC);
 
             if (Negative) {
-                if (relative_jump & 0x80) {
-                    PC -= (0x100 - relative_jump);
-                } else {
-                    PC += relative_jump;
+                DO_RELATIVE_JUMP(relative_jump);
+
+                auto page_crossed = (PC & 0x100) != (old_pc & 0x100);
+                if (page_crossed) {
+                    return 4;
                 }
+                return 3;
+            }
+            return 2;
+        }
+        case INS_BNE:
+        {
+            Byte relative_jump = mem->ReadByte(PC++);
+            Word old_pc(PC);
+
+            if (!Zero) {
+                DO_RELATIVE_JUMP(relative_jump);
 
                 auto page_crossed = (PC & 0x100) != (old_pc & 0x100);
                 if (page_crossed) {
