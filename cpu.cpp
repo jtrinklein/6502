@@ -103,6 +103,19 @@ static constexpr Byte INS_ROR_ZPX  = 0x76;
 static constexpr Byte INS_ROR_ABS  = 0x6E;
 static constexpr Byte INS_ROR_ABSX = 0x7E;
 
+/* ROL
+Move each of the bits in either A or M one place to the left.
+Bit 0 is filled with the current value of the carry flag whilst
+the old bit 7 becomes the new carry flag value.
+
+For mem operations: data is loaded into accumulator, shifted, then written back to memory
+*/
+static constexpr Byte INS_ROL_A    = 0x2A;
+static constexpr Byte INS_ROL_ZP   = 0x26;
+static constexpr Byte INS_ROL_ZPX  = 0x36;
+static constexpr Byte INS_ROL_ABS  = 0x2E;
+static constexpr Byte INS_ROL_ABSX = 0x3E;
+
 /* STA */
 static constexpr Byte INS_STA_ZP   = 0x85;
 static constexpr Byte INS_STA_ZPX  = 0x95;
@@ -146,6 +159,7 @@ static constexpr Byte INS_CLI  = 0x58;
 
 #define SET_LSR_FLAGS(v) SET_LOAD_REG_FLAGS(v)
 #define SET_ROR_FLAGS(v) SET_LOAD_REG_FLAGS(v)
+#define SET_ROL_FLAGS(v) SET_LOAD_REG_FLAGS(v)
 
 #define DO_LSR(x) do {          \
         Byte newC = x & 0x01;   \
@@ -160,6 +174,15 @@ static constexpr Byte INS_CLI  = 0x58;
             x += 0x80;          \
         }                       \
         Carry = newC;           \
+    }while(false)
+
+#define DO_ROL(x) do {                      \
+        Byte newC = (x & 0x80) == 0x80;     \
+        x = (x << 1);                       \
+        if (Carry) {                        \
+            x += 0x01;                      \
+        }                                   \
+        Carry = newC;                       \
     }while(false)
 
 u32 CPU::RunOneInstruction() {
@@ -435,6 +458,55 @@ u32 CPU::RunOneInstruction() {
             DO_ROR(A);
             mem->WriteByte(addr, A);
             SET_ROR_FLAGS(A);
+            return 6;
+        }
+        case INS_ROL_A:
+        {
+            DO_ROL(A);
+            
+            SET_ROL_FLAGS(A);
+            return 2;
+        }
+        case INS_ROL_ABS:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            A = mem->ReadByte(addr);
+
+            DO_ROL(A);
+            mem->WriteByte(addr, A);
+            SET_ROL_FLAGS(A);
+            return 6;
+        }
+        case INS_ROL_ABSX:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            A = mem->ReadByte(addr + X);
+
+            DO_ROL(A);
+            mem->WriteByte(addr + X, A);
+            SET_ROL_FLAGS(A);
+            return 7;
+        }
+        case INS_ROL_ZP:
+        {
+            Word addr = 0x0000 + mem->ReadByte(PC++);
+            A = mem->ReadByte(addr);
+            DO_ROL(A);
+            mem->WriteByte(addr, A);
+            SET_ROL_FLAGS(A);
+            return 5;
+        }
+        case INS_ROL_ZPX:
+        {
+            Byte offset = mem->ReadByte(PC++);
+            Word addr = 0x0000 + (X + offset) & 0xFF;
+            A = mem->ReadByte(addr);
+
+            DO_ROL(A);
+            mem->WriteByte(addr, A);
+            SET_ROL_FLAGS(A);
             return 6;
         }
         case INS_STA_ZP:
