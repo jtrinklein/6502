@@ -908,6 +908,22 @@ u32 CPU::RunOneInstruction() {
             }
             return 2;
         }
+        case INS_BVS:
+        {
+            Byte relative_jump = mem->ReadByte(PC++);
+            Word old_pc(PC);
+
+            if (Overflow) {
+                DO_RELATIVE_JUMP(relative_jump);
+
+                auto page_crossed = (PC & 0x100) != (old_pc & 0x100);
+                if (page_crossed) {
+                    return 4;
+                }
+                return 3;
+            }
+            return 2;
+        }
         default:
         {
             std::cout << "unknown opcode: 0x" << std::hex << (u32)opcode << std::endl;
