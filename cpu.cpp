@@ -180,6 +180,7 @@ static constexpr Byte INS_BIT_ABS = 0x2C;
 /* Branch Instructions */
 static constexpr Byte INS_BMI  = 0x30; // branch if minus (Negative is set)
 static constexpr Byte INS_BNE  = 0xD0; // branch if not equal (Zero is clear)
+static constexpr Byte INS_BPL  = 0x10; // branch if positive (Negative is clear)
 
 
 
@@ -812,6 +813,22 @@ u32 CPU::RunOneInstruction() {
             Word old_pc(PC);
 
             if (!Zero) {
+                DO_RELATIVE_JUMP(relative_jump);
+
+                auto page_crossed = (PC & 0x100) != (old_pc & 0x100);
+                if (page_crossed) {
+                    return 4;
+                }
+                return 3;
+            }
+            return 2;
+        }
+        case INS_BPL:
+        {
+            Byte relative_jump = mem->ReadByte(PC++);
+            Word old_pc(PC);
+
+            if (!Negative) {
                 DO_RELATIVE_JUMP(relative_jump);
 
                 auto page_crossed = (PC & 0x100) != (old_pc & 0x100);
