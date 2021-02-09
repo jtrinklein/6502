@@ -2,12 +2,12 @@
 #include <cpu.h>
 #include <mem.h>
 
-class LSR_A_Tests : public CxxTest::TestSuite 
+class ROR_A_Tests : public CxxTest::TestSuite 
 {
 public:
     CPU*  cpu;
     Mem* mem;
-    static constexpr Byte opcode = 0x4A;
+    static constexpr Byte opcode = 0x6A;
     static constexpr Byte op_size = 1;
     static constexpr Byte op_cycles = 2;
 
@@ -23,7 +23,7 @@ public:
     }
 
     void test_WithZero_NoCarrySet( void ) {
-        const Byte test_val   = 0b00000000;
+        const Byte test_val  = 0b00000000;
         const Byte expect_val= 0b00000000;
         const Byte d[] = {opcode, 0xFF};
 
@@ -45,8 +45,8 @@ public:
     }
 
     void test_WithZero_CarrySet( void ) {
-        const Byte test_val   = 0b00000000;
-        const Byte expect_val= 0b00000000;
+        const Byte test_val  = 0b00000000;
+        const Byte expect_val= 0b10000000;
         const Byte d[] = {opcode, 0xFF};
 
         mem->LoadFromData(d, sizeof(d));
@@ -61,13 +61,13 @@ public:
         TS_ASSERT_EQUALS(cycles, op_cycles);
         TS_ASSERT_EQUALS(cpu->A, expect_val);
         TS_ASSERT_EQUALS(cpu->PC, op_size);
-        TS_ASSERT_EQUALS(cpu->Zero, 1);
-        TS_ASSERT_EQUALS(cpu->Negative, 0);
+        TS_ASSERT_EQUALS(cpu->Zero, 0);
+        TS_ASSERT_EQUALS(cpu->Negative, 1);
         TS_ASSERT_EQUALS(cpu->Carry, 0);
     }
 
     void test_WithNonZero_NoCarrySet_NoCarry( void ) {
-        const Byte test_val   = 0b10010110;
+        const Byte test_val  = 0b10010110;
         const Byte expect_val= 0b01001011;
         const Byte d[] = {opcode, 0xFF};
 
@@ -89,7 +89,7 @@ public:
     }
 
     void test_WithNonZero_NoCarrySet_WithCarry( void ) {
-        const Byte test_val   = 0b10010101;
+        const Byte test_val  = 0b10010101;
         const Byte expect_val= 0b01001010;
         const Byte d[] = {opcode, 0xFF};
 
@@ -111,8 +111,8 @@ public:
     }
 
     void test_WithNonZero_CarrySet_NoCarry( void ) {
-        const Byte test_val   = 0b10010110;
-        const Byte expect_val= 0b01001011;
+        const Byte test_val  = 0b10010110;
+        const Byte expect_val= 0b11001011;
         const Byte d[] = {opcode, 0xFF};
 
         mem->LoadFromData(d, sizeof(d));
@@ -128,13 +128,13 @@ public:
         TS_ASSERT_EQUALS(cycles, op_cycles);
         TS_ASSERT_EQUALS(cpu->PC, op_size);
         TS_ASSERT_EQUALS(cpu->Zero, 0);
-        TS_ASSERT_EQUALS(cpu->Negative, 0);
+        TS_ASSERT_EQUALS(cpu->Negative, 1);
         TS_ASSERT_EQUALS(cpu->Carry, 0);
     }
 
     void test_WithNonZero_CarrySet_WithCarry( void ) {
-        const Byte test_val   = 0b10010101;
-        const Byte expect_val= 0b01001010;
+        const Byte test_val  = 0b10010101;
+        const Byte expect_val= 0b11001010;
         const Byte d[] = {opcode, 0xFF};
 
         mem->LoadFromData(d, sizeof(d));
@@ -150,7 +150,7 @@ public:
         TS_ASSERT_EQUALS(cycles, op_cycles);
         TS_ASSERT_EQUALS(cpu->PC, op_size);
         TS_ASSERT_EQUALS(cpu->Zero, 0);
-        TS_ASSERT_EQUALS(cpu->Negative, 0);
+        TS_ASSERT_EQUALS(cpu->Negative, 1);
         TS_ASSERT_EQUALS(cpu->Carry, 1);
     }
 };

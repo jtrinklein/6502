@@ -2,14 +2,14 @@
 #include <cpu.h>
 #include <mem.h>
 
-class LSR_AbsoluteX_Tests : public CxxTest::TestSuite 
+class ROR_ZeroPage_Tests : public CxxTest::TestSuite 
 {
 public:
     CPU*  cpu;
     Mem* mem;
-    static constexpr Byte opcode = 0x5E;
-    static constexpr Byte op_size = 3;
-    static constexpr Byte op_cycles = 7;
+    static constexpr Byte opcode = 0x66;
+    static constexpr Byte op_size = 2;
+    static constexpr Byte op_cycles = 5;
 
     void setUp() {
         mem= new Mem();
@@ -25,15 +25,10 @@ public:
     void test_WithZero_NoCarrySet( void ) {
         const Byte test_val   = 0b00000000;
         const Byte expect_val= 0b00000000;
-        const Word addr = 0x5432;
-        const Byte offset = 0x10;
-        const Byte d[] = {opcode, 0,0, 0xFF};
+        const Byte zp_addr = 0x02;
+        const Byte d[] = {opcode, zp_addr, test_val};
         mem->LoadFromData(d, sizeof(d));
 
-        mem->WriteWord(1, addr);
-        mem->WriteWord(addr + offset, test_val);
-
-        cpu->X = offset;
         cpu->A = 0x11;
         cpu->Carry = 0;
         cpu->Zero = 0;
@@ -42,7 +37,7 @@ public:
         auto cycles = cpu->RunOneInstruction();
 
         TS_ASSERT_EQUALS(cpu->A, expect_val);
-        TS_ASSERT_EQUALS(mem->ReadByte(addr + offset), expect_val);
+        TS_ASSERT_EQUALS(mem->ReadByte(zp_addr), expect_val);
 
         TS_ASSERT_EQUALS(cycles, op_cycles);
         TS_ASSERT_EQUALS(cpu->PC, op_size);
@@ -50,18 +45,14 @@ public:
         TS_ASSERT_EQUALS(cpu->Negative, 0);
         TS_ASSERT_EQUALS(cpu->Carry, 0);
     }
+
     void test_WithZero_CarrySet( void ) {
         const Byte test_val   = 0b00000000;
         const Byte expect_val= 0b10000000;
-        const Word addr = 0x04FB;
-        const Byte offset = 0x41;
-        const Byte d[] = {opcode, 0,0, 0xFF};
+        const Byte zp_addr = 0x02;
+        const Byte d[] = {opcode, zp_addr, test_val};
         mem->LoadFromData(d, sizeof(d));
 
-        mem->WriteWord(1, addr);
-        mem->WriteWord(addr + offset, test_val);
-
-        cpu->X = offset;
         cpu->A = 0x11;
         cpu->Carry = 1;
         cpu->Zero = 1;
@@ -70,7 +61,7 @@ public:
         auto cycles = cpu->RunOneInstruction();
 
         TS_ASSERT_EQUALS(cpu->A, expect_val);
-        TS_ASSERT_EQUALS(mem->ReadByte(addr + offset), expect_val);
+        TS_ASSERT_EQUALS(mem->ReadByte(zp_addr), expect_val);
 
         TS_ASSERT_EQUALS(cycles, op_cycles);
         TS_ASSERT_EQUALS(cpu->PC, op_size);
@@ -78,18 +69,14 @@ public:
         TS_ASSERT_EQUALS(cpu->Negative, 1);
         TS_ASSERT_EQUALS(cpu->Carry, 0);
     }
+
     void test_WithNonZero_NoCarrySet_NoCarry( void ) {
         const Byte test_val   = 0b01101110;
         const Byte expect_val= 0b00110111;
-        const Word addr = 0xDCBA;
-        const Byte offset = 0xA9;
-        const Byte d[] = {opcode, 0,0, 0xFF};
+        const Byte zp_addr = 0x02;
+        const Byte d[] = {opcode, zp_addr, test_val};
         mem->LoadFromData(d, sizeof(d));
 
-        mem->WriteWord(1, addr);
-        mem->WriteWord(addr + offset, test_val);
-
-        cpu->X = offset;
         cpu->A = 0x00;
         cpu->Carry = 0;
         cpu->Zero = 1;
@@ -98,7 +85,7 @@ public:
         auto cycles = cpu->RunOneInstruction();
 
         TS_ASSERT_EQUALS(cpu->A, expect_val);
-        TS_ASSERT_EQUALS(mem->ReadByte(addr + offset), expect_val);
+        TS_ASSERT_EQUALS(mem->ReadByte(zp_addr), expect_val);
 
         TS_ASSERT_EQUALS(cycles, op_cycles);
         TS_ASSERT_EQUALS(cpu->PC, op_size);
@@ -106,18 +93,14 @@ public:
         TS_ASSERT_EQUALS(cpu->Negative, 0);
         TS_ASSERT_EQUALS(cpu->Carry, 0);
     }
+
     void test_WithNonZero_CarrySet_NoCarry( void ) {
         const Byte test_val   = 0b01101110;
         const Byte expect_val= 0b10110111;
-        const Word addr = 0x4444;
-        const Byte offset = 0x01;
-        const Byte d[] = {opcode, 0,0, 0xFF};
+        const Byte zp_addr = 0x02;
+        const Byte d[] = {opcode, zp_addr, test_val};
         mem->LoadFromData(d, sizeof(d));
 
-        mem->WriteWord(1, addr);
-        mem->WriteWord(addr + offset, test_val);
-
-        cpu->X = offset;
         cpu->A = 0x00;
         cpu->Carry = 1;
         cpu->Zero = 1;
@@ -126,7 +109,7 @@ public:
         auto cycles = cpu->RunOneInstruction();
 
         TS_ASSERT_EQUALS(cpu->A, expect_val);
-        TS_ASSERT_EQUALS(mem->ReadByte(addr + offset), expect_val);
+        TS_ASSERT_EQUALS(mem->ReadByte(zp_addr), expect_val);
 
         TS_ASSERT_EQUALS(cycles, op_cycles);
         TS_ASSERT_EQUALS(cpu->PC, op_size);
@@ -134,18 +117,14 @@ public:
         TS_ASSERT_EQUALS(cpu->Negative, 1);
         TS_ASSERT_EQUALS(cpu->Carry, 0);
     }
+
     void test_WithNonZero_NoCarrySet_WithCarry( void ) {
         const Byte test_val   = 0b01101111;
         const Byte expect_val= 0b00110111;
-        const Word addr = 0x123F;
-        const Byte offset = 0xFF;
-        const Byte d[] = {opcode, 0,0, 0xFF};
+        const Byte zp_addr = 0x02;
+        const Byte d[] = {opcode, zp_addr, test_val};
         mem->LoadFromData(d, sizeof(d));
 
-        mem->WriteWord(1, addr);
-        mem->WriteWord(addr + offset, test_val);
-
-        cpu->X = offset;
         cpu->A = 0x00;
         cpu->Carry = 0;
         cpu->Zero = 1;
@@ -154,7 +133,7 @@ public:
         auto cycles = cpu->RunOneInstruction();
 
         TS_ASSERT_EQUALS(cpu->A, expect_val);
-        TS_ASSERT_EQUALS(mem->ReadByte(addr + offset), expect_val);
+        TS_ASSERT_EQUALS(mem->ReadByte(zp_addr), expect_val);
 
         TS_ASSERT_EQUALS(cycles, op_cycles);
         TS_ASSERT_EQUALS(cpu->PC, op_size);
@@ -162,18 +141,14 @@ public:
         TS_ASSERT_EQUALS(cpu->Negative, 0);
         TS_ASSERT_EQUALS(cpu->Carry, 1);
     }
+
     void test_WithNonZero_CarrySet_WithCarry( void ) {
         const Byte test_val   = 0b01101111;
         const Byte expect_val= 0b10110111;
-        const Word addr = 0xCC11;
-        const Byte offset = 0x11;
-        const Byte d[] = {opcode, 0,0, 0xFF};
+        const Byte zp_addr = 0x02;
+        const Byte d[] = {opcode, zp_addr, test_val};
         mem->LoadFromData(d, sizeof(d));
 
-        mem->WriteWord(1, addr);
-        mem->WriteWord(addr + offset, test_val);
-
-        cpu->X = offset;
         cpu->A = 0x00;
         cpu->Carry = 1;
         cpu->Zero = 1;
@@ -182,7 +157,7 @@ public:
         auto cycles = cpu->RunOneInstruction();
 
         TS_ASSERT_EQUALS(cpu->A, expect_val);
-        TS_ASSERT_EQUALS(mem->ReadByte(addr + offset), expect_val);
+        TS_ASSERT_EQUALS(mem->ReadByte(zp_addr), expect_val);
 
         TS_ASSERT_EQUALS(cycles, op_cycles);
         TS_ASSERT_EQUALS(cpu->PC, op_size);
