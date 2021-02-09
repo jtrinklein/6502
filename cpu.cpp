@@ -116,6 +116,22 @@ static constexpr Byte INS_ROL_ZPX  = 0x36;
 static constexpr Byte INS_ROL_ABS  = 0x2E;
 static constexpr Byte INS_ROL_ABSX = 0x3E;
 
+/* ASL
+This operation shifts all the bits of the accumulator or
+memory contents one bit left.
+Bit 0 is set to 0 and bit 7 is placed in the carry flag.
+The effect of this operation is to multiply the memory
+contents by 2 (ignoring 2's complement considerations),
+setting the carry if the result will not fit in 8 bits.
+
+For mem operations: data is loaded into accumulator, shifted, then written back to memory
+*/
+static constexpr Byte INS_ASL_A    = 0x0A;
+static constexpr Byte INS_ASL_ZP   = 0x06;
+static constexpr Byte INS_ASL_ZPX  = 0x16;
+static constexpr Byte INS_ASL_ABS  = 0x0E;
+static constexpr Byte INS_ASL_ABSX = 0x1E;
+
 /* STA */
 static constexpr Byte INS_STA_ZP   = 0x85;
 static constexpr Byte INS_STA_ZPX  = 0x95;
@@ -160,6 +176,7 @@ static constexpr Byte INS_CLI  = 0x58;
 #define SET_LSR_FLAGS(v) SET_LOAD_REG_FLAGS(v)
 #define SET_ROR_FLAGS(v) SET_LOAD_REG_FLAGS(v)
 #define SET_ROL_FLAGS(v) SET_LOAD_REG_FLAGS(v)
+#define SET_ASL_FLAGS(v) SET_LOAD_REG_FLAGS(v)
 
 #define DO_LSR(x) do {          \
         Byte newC = x & 0x01;   \
@@ -182,6 +199,12 @@ static constexpr Byte INS_CLI  = 0x58;
         if (Carry) {                        \
             x += 0x01;                      \
         }                                   \
+        Carry = newC;                       \
+    }while(false)
+
+#define DO_ASL(x) do {                      \
+        Byte newC = (x & 0x80) == 0x80;     \
+        x = (x << 1);                       \
         Carry = newC;                       \
     }while(false)
 
@@ -507,6 +530,55 @@ u32 CPU::RunOneInstruction() {
             DO_ROL(A);
             mem->WriteByte(addr, A);
             SET_ROL_FLAGS(A);
+            return 6;
+        }
+        case INS_ASL_A:
+        {
+            DO_ASL(A);
+            
+            SET_ASL_FLAGS(A);
+            return 2;
+        }
+        case INS_ASL_ABS:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            A = mem->ReadByte(addr);
+
+            DO_ASL(A);
+            mem->WriteByte(addr, A);
+            SET_ASL_FLAGS(A);
+            return 6;
+        }
+        case INS_ASL_ABSX:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            A = mem->ReadByte(addr + X);
+
+            DO_ASL(A);
+            mem->WriteByte(addr + X, A);
+            SET_ASL_FLAGS(A);
+            return 7;
+        }
+        case INS_ASL_ZP:
+        {
+            Word addr = 0x0000 + mem->ReadByte(PC++);
+            A = mem->ReadByte(addr);
+            DO_ASL(A);
+            mem->WriteByte(addr, A);
+            SET_ASL_FLAGS(A);
+            return 5;
+        }
+        case INS_ASL_ZPX:
+        {
+            Byte offset = mem->ReadByte(PC++);
+            Word addr = 0x0000 + (X + offset) & 0xFF;
+            A = mem->ReadByte(addr);
+
+            DO_ASL(A);
+            mem->WriteByte(addr, A);
+            SET_ASL_FLAGS(A);
             return 6;
         }
         case INS_STA_ZP:
