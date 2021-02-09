@@ -30,7 +30,7 @@ public:
         mem->LoadFromData(d, sizeof(d));
 
         mem->WriteWord(1, addr);
-        mem->WriteWord(addr, test_val);
+        mem->WriteByte(addr, test_val);
 
         cpu->A = 0x11;
         cpu->Carry = 0;
@@ -56,7 +56,7 @@ public:
         mem->LoadFromData(d, sizeof(d));
 
         mem->WriteWord(1, addr);
-        mem->WriteWord(addr, test_val);
+        mem->WriteByte(addr, test_val);
         cpu->A = 0x11;
         cpu->Carry = 1;
         cpu->Zero = 1;
@@ -81,7 +81,7 @@ public:
         mem->LoadFromData(d, sizeof(d));
 
         mem->WriteWord(1, addr);
-        mem->WriteWord(addr, test_val);
+        mem->WriteByte(addr, test_val);
 
 
         cpu->A = 0x00;
@@ -108,7 +108,7 @@ public:
         mem->LoadFromData(d, sizeof(d));
 
         mem->WriteWord(1, addr);
-        mem->WriteWord(addr, test_val);
+        mem->WriteByte(addr, test_val);
 
         cpu->A = 0x00;
         cpu->Carry = 1;
@@ -134,7 +134,7 @@ public:
         mem->LoadFromData(d, sizeof(d));
 
         mem->WriteWord(1, addr);
-        mem->WriteWord(addr, test_val);
+        mem->WriteByte(addr, test_val);
 
         cpu->A = 0x00;
         cpu->Carry = 0;
@@ -160,7 +160,7 @@ public:
         mem->LoadFromData(d, sizeof(d));
 
         mem->WriteWord(1, addr);
-        mem->WriteWord(addr, test_val);
+        mem->WriteByte(addr, test_val);
 
         cpu->A = 0x00;
         cpu->Carry = 1;
