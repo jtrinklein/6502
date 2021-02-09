@@ -72,7 +72,7 @@ public:
         TS_ASSERT_EQUALS(cpu->Zero, 0);
     }
 
-    void test_WithZeroValue_WithZeroSet( void ) {
+    void test_WithNegativeValue_WithZeroSet( void ) {
         const Byte relative_value = 0xF1;
         const Byte offset = (0x100 - relative_value) & 0xFF;
         const Byte d[] = {opcode, relative_value};
@@ -89,7 +89,7 @@ public:
         TS_ASSERT_EQUALS(cpu->Zero, 1);
     }
 
-    void test_WithZeroValue_WithZeroSet_WithPageCross( void ) {
+    void test_WithNegativeValue_WithZeroSet_WithPageCross( void ) {
         const Byte relative_value = 0x98;
         const Byte offset = (0x100 - relative_value) & 0xFF;
         const Byte d[] = {opcode, relative_value};
@@ -107,7 +107,7 @@ public:
         TS_ASSERT_EQUALS(cpu->Zero, 1);
     }
 
-    void test_WithZeroValue_WithZeroNotSet( void ) {
+    void test_WithNegativeValue_WithZeroNotSet( void ) {
         const Byte relative_value = 0xC3;
         const Byte d[] = {opcode, relative_value};
         const Word pc_start = 0x7777;
