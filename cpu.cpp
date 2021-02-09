@@ -167,6 +167,22 @@ static constexpr Byte INS_CLC  = 0x18;
 static constexpr Byte INS_CLD  = 0xD8;
 static constexpr Byte INS_CLI  = 0x58;
 
+/* BIT test 
+This instructions is used to test if 
+one or more bits are set in a target memory location.
+The mask pattern in A is ANDed with the value in memory
+to set or clear the zero flag, but the result is not kept.
+Bits 7 and 6 of the value from memory are copied into the N and V flags.
+*/
+static constexpr Byte INS_BIT_ZP  = 0x24;
+static constexpr Byte INS_BIT_ABS = 0x2C;
+
+
+#define SET_BIT_FLAGS(v) do {           \
+        Zero = (A & v) == 0;            \
+        Overflow = ((1 << 6) & v) != 0; \
+        Negative = ((1 << 7) & v) != 0; \
+    } while(false)
 
 #define SET_LOAD_REG_FLAGS(v) do { \
     Zero = v == 0;\
@@ -741,6 +757,25 @@ u32 CPU::RunOneInstruction() {
         {
             InterruptDisable = 0;
             return 2;
+        }
+        case INS_BIT_ZP:
+        {
+            Word addr = 0x0000 + mem->ReadByte(PC++);
+            Byte v = mem->ReadByte(addr);
+
+            SET_BIT_FLAGS(v);
+
+            return 3;
+        }
+        case INS_BIT_ABS:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            Byte v = mem->ReadByte(addr);
+
+            SET_BIT_FLAGS(v);
+
+            return 4;
         }
 
         default:
