@@ -2,12 +2,12 @@
 #include <cpu.h>
 #include <mem.h>
 
-class SED_Tests : public CxxTest::TestSuite 
+class CLI_Tests : public CxxTest::TestSuite 
 {
 public:
     CPU*  cpu;
     Mem* mem;
-    static constexpr Byte opcode = 0xF8;
+    static constexpr Byte opcode = 0x58;
     static constexpr Byte op_size = 1;
     static constexpr Byte op_cycles = 2;
 
@@ -36,9 +36,9 @@ public:
 
         TS_ASSERT_EQUALS(cycles, op_cycles);
         TS_ASSERT_EQUALS(cpu->PC, op_size);
-        TS_ASSERT_EQUALS(cpu->DecimalMode, 1);
         TS_ASSERT_EQUALS(cpu->Carry, 0);
         TS_ASSERT_EQUALS(cpu->Zero, 0);
+        TS_ASSERT_EQUALS(cpu->DecimalMode, 0);
         TS_ASSERT_EQUALS(cpu->Negative, 0);
         TS_ASSERT_EQUALS(cpu->InterruptDisable, 0);
     }
@@ -57,10 +57,10 @@ public:
 
         TS_ASSERT_EQUALS(cycles, op_cycles);
         TS_ASSERT_EQUALS(cpu->PC, op_size);
-        TS_ASSERT_EQUALS(cpu->DecimalMode, 1);
+        TS_ASSERT_EQUALS(cpu->InterruptDisable, 0);
         TS_ASSERT_EQUALS(cpu->Carry, 1);
         TS_ASSERT_EQUALS(cpu->Zero, 1);
+        TS_ASSERT_EQUALS(cpu->DecimalMode, 1);
         TS_ASSERT_EQUALS(cpu->Negative, 1);
-        TS_ASSERT_EQUALS(cpu->InterruptDisable, 1);
     }
 };

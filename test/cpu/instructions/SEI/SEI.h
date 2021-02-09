@@ -26,12 +26,20 @@ public:
         const Byte d[] = {opcode, 0xFF};
         mem->LoadFromData(d, sizeof(d));
 
+        cpu->Carry = 0;
+        cpu->Zero = 0;
+        cpu->Negative = 0;
+        cpu->DecimalMode = 0;
         cpu->InterruptDisable = 0;
 
         auto cycles = cpu->RunOneInstruction();
 
         TS_ASSERT_EQUALS(cycles, op_cycles);
         TS_ASSERT_EQUALS(cpu->PC, op_size);
+        TS_ASSERT_EQUALS(cpu->Carry, 0);
+        TS_ASSERT_EQUALS(cpu->Zero, 0);
+        TS_ASSERT_EQUALS(cpu->DecimalMode, 0);
+        TS_ASSERT_EQUALS(cpu->Negative, 0);
         TS_ASSERT_EQUALS(cpu->InterruptDisable, 1);
     }
 
@@ -39,12 +47,20 @@ public:
         const Byte d[] = {opcode, 0xFF};
         mem->LoadFromData(d, sizeof(d));
 
+        cpu->Carry = 1;
+        cpu->Zero = 1;
+        cpu->Negative = 1;
+        cpu->DecimalMode = 1;
         cpu->InterruptDisable = 1;
 
         auto cycles = cpu->RunOneInstruction();
 
         TS_ASSERT_EQUALS(cycles, op_cycles);
         TS_ASSERT_EQUALS(cpu->PC, op_size);
+        TS_ASSERT_EQUALS(cpu->Carry, 1);
+        TS_ASSERT_EQUALS(cpu->Zero, 1);
+        TS_ASSERT_EQUALS(cpu->DecimalMode, 1);
+        TS_ASSERT_EQUALS(cpu->Negative, 1);
         TS_ASSERT_EQUALS(cpu->InterruptDisable, 1);
     }
 };

@@ -117,10 +117,13 @@ static constexpr Byte INS_TYA  = 0x98;
 static constexpr Byte INS_TSX  = 0xBA;
 static constexpr Byte INS_TXS  = 0x9A;
 
-/* Set flags */
+/* Set/Clear flags */
 static constexpr Byte INS_SEC  = 0x38;
 static constexpr Byte INS_SED  = 0xF8;
 static constexpr Byte INS_SEI  = 0x78;
+static constexpr Byte INS_CLC  = 0x18;
+static constexpr Byte INS_CLD  = 0xD8;
+static constexpr Byte INS_CLI  = 0x58;
 
 
 #define SET_LOAD_REG_FLAGS(v) do { \
@@ -509,6 +512,21 @@ u32 CPU::RunOneInstruction() {
         case INS_SEI:
         {
             InterruptDisable = 1;
+            return 2;
+        }
+        case INS_CLC:
+        {
+            Carry = 0;
+            return 2;
+        }
+        case INS_CLD:
+        {
+            DecimalMode = 0;
+            return 2;
+        }
+        case INS_CLI:
+        {
+            InterruptDisable = 0;
             return 2;
         }
 
