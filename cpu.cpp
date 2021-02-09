@@ -184,6 +184,8 @@ static constexpr Byte INS_BNE  = 0xD0; // branch if not equal (Zero is clear)
 static constexpr Byte INS_BEQ  = 0xF0; // branch if positive (Zero is set)
 static constexpr Byte INS_BCC  = 0x90; // branch if not equal (Carry is clear)
 static constexpr Byte INS_BCS  = 0xB0; // branch if positive (Carry is set)
+static constexpr Byte INS_BVC  = 0x50; // branch if not equal (Overflow is clear)
+static constexpr Byte INS_BVS  = 0x70; // branch if positive (Overflow is set)
 
 
 
@@ -880,6 +882,22 @@ u32 CPU::RunOneInstruction() {
             Word old_pc(PC);
 
             if (!Carry) {
+                DO_RELATIVE_JUMP(relative_jump);
+
+                auto page_crossed = (PC & 0x100) != (old_pc & 0x100);
+                if (page_crossed) {
+                    return 4;
+                }
+                return 3;
+            }
+            return 2;
+        }
+        case INS_BVC:
+        {
+            Byte relative_jump = mem->ReadByte(PC++);
+            Word old_pc(PC);
+
+            if (!Overflow) {
                 DO_RELATIVE_JUMP(relative_jump);
 
                 auto page_crossed = (PC & 0x100) != (old_pc & 0x100);
