@@ -177,6 +177,10 @@ Bits 7 and 6 of the value from memory are copied into the N and V flags.
 static constexpr Byte INS_BIT_ZP  = 0x24;
 static constexpr Byte INS_BIT_ABS = 0x2C;
 
+/* Branch Instructions */
+static constexpr Byte INS_BMI  = 0x30; // branch if minus 
+
+
 
 #define SET_BIT_FLAGS(v) do {           \
         Zero = (A & v) == 0;            \
@@ -777,7 +781,26 @@ u32 CPU::RunOneInstruction() {
 
             return 4;
         }
+        case INS_BMI:
+        {
+            Byte relative_jump = mem->ReadByte(PC++);
+            Word old_pc(PC);
 
+            if (Negative) {
+                if (relative_jump & 0x80) {
+                    PC -= (0x100 - relative_jump);
+                } else {
+                    PC += relative_jump;
+                }
+
+                auto page_crossed = (PC & 0x100) != (old_pc & 0x100);
+                if (page_crossed) {
+                    return 4;
+                }
+                return 3;
+            }
+            return 2;
+        }
         default:
         {
             std::cout << "unknown opcode: 0x" << std::hex << (u32)opcode << std::endl;
