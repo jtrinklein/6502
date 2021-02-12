@@ -197,6 +197,26 @@ static constexpr Byte INS_AND_ABSY = 0x39;
 static constexpr Byte INS_AND_INDX = 0x21;
 static constexpr Byte INS_AND_INDY = 0x31;
 
+/* ADC - Add with carry 
+
+The more confusing thing is the overflow flag.
+It tells you if the sign of the result is wrong in signed operations,
+such that for example you added to positive numbers together,
+for example $4E and $53 which give $A1 which appears negative
+since the high bit is set. 
+
+www.6502.org/tutorials/vflag.html
+
+*/
+static constexpr Byte INS_ADC_IM   = 0x69;
+static constexpr Byte INS_ADC_ZP   = 0x65;
+static constexpr Byte INS_ADC_ZPX  = 0x75;
+static constexpr Byte INS_ADC_ABS  = 0x6D;
+static constexpr Byte INS_ADC_ABSX = 0x7D;
+static constexpr Byte INS_ADC_ABSY = 0x79;
+static constexpr Byte INS_ADC_INDX = 0x61;
+static constexpr Byte INS_ADC_INDY = 0x71;
+
 
 #define SET_BIT_FLAGS(v) do {           \
         Zero = (A & v) == 0;            \
@@ -204,15 +224,29 @@ static constexpr Byte INS_AND_INDY = 0x31;
         Negative = ((1 << 7) & v) != 0; \
     } while(false)
 
-#define SET_LOAD_REG_FLAGS(v) do { \
-    Zero = v == 0;\
-    Negative = (v & 0x80) != 0;\
+#define SET_LOAD_REG_FLAGS(v) do {  \
+    Zero = v == 0;                  \
+    Negative = (v & 0x80) != 0;     \
     } while(false)
 
 #define SET_LSR_FLAGS(v) SET_LOAD_REG_FLAGS(v)
 #define SET_ROR_FLAGS(v) SET_LOAD_REG_FLAGS(v)
 #define SET_ROL_FLAGS(v) SET_LOAD_REG_FLAGS(v)
 #define SET_ASL_FLAGS(v) SET_LOAD_REG_FLAGS(v)
+
+#define SET_ADD_FLAGS(v1,v2) do {                           \
+    Zero = ((v1+v2) & 0xFF) == 0;                             \
+    Negative = ((v1+v2) & 0x80) != 0;                         \
+    Overflow = (v1<0x80) && (v2<0x80) && ((v1+v2) >= 0x80); \
+    } while(false)
+
+#define DO_ADD(v1,v2) do {      \
+    Byte c = Carry;             \
+    Word w1 = v1,w2 = v2;       \
+    w1 = w1+w2+c;               \
+    A = w1 & 0xFF;              \
+    Carry = (w1 & 0x0100) != 0; \
+}while(false)
 
 #define DO_LSR(x) do {          \
         Byte newC = x & 0x01;   \
@@ -1017,6 +1051,115 @@ u32 CPU::RunOneInstruction() {
             A &= val;
 
             SET_LOAD_REG_FLAGS(A);
+            if ((((addr & 0xFF) + Y ) & 0x100) == 0x100) {
+                return 6;
+            }
+            return 5;
+        }
+        case INS_ADC_IM:
+        {
+            Byte v2 = mem->ReadByte(PC++);
+            Byte v1 = A;
+
+            DO_ADD(v1,v2);
+            SET_ADD_FLAGS(v1,v2);
+
+            return 2;
+        }
+        case INS_ADC_ABS:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            Byte v2 = mem->ReadByte(addr);
+            Byte v1 = A;
+
+            DO_ADD(v1,v2);
+            SET_ADD_FLAGS(v1,v2);
+
+            return 4;
+        }
+        case INS_ADC_ABSX:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            Byte v2 = mem->ReadByte(addr + X);
+            Byte v1 = A;
+
+            DO_ADD(v1,v2);
+            SET_ADD_FLAGS(v1,v2);
+
+            if ((((addr & 0xFF) + X ) & 0x100) == 0x100) {
+                return 5;
+            }
+            return 4;
+        }
+        case INS_ADC_ABSY:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            Byte v2 = mem->ReadByte(addr + Y);
+            Byte v1 = A;
+
+            DO_ADD(v1,v2);
+            SET_ADD_FLAGS(v1,v2);
+
+            if ((((addr & 0xFF) + Y ) & 0x100) == 0x100) {
+                return 5;
+            }
+            return 4;
+        }
+        case INS_ADC_ZP:
+        {
+            Word addr = 0x0000 + mem->ReadByte(PC++);
+            Byte v2 = mem->ReadByte(addr);
+            Byte v1 = A;
+
+            DO_ADD(v1,v2);
+            SET_ADD_FLAGS(v1,v2);
+
+            return 3;
+        }
+        case INS_ADC_ZPX:
+        {
+            Word addr = 0x0000 + (mem->ReadByte(PC++) + X) & 0xFF;
+            Byte v2 = mem->ReadByte(addr);
+            Byte v1 = A;
+
+            DO_ADD(v1,v2);
+            SET_ADD_FLAGS(v1,v2);
+
+            return 4;
+        }
+        case INS_ADC_INDX:
+        {
+            Byte offset = mem->ReadByte(PC++);
+            Word addr = 0x0000 + (X + offset) & 0xFF;
+            addr = mem->ReadWord(addr);
+            Byte v2 = mem->ReadByte(addr);
+            Byte v1 = A;
+
+            DO_ADD(v1,v2);
+            SET_ADD_FLAGS(v1,v2);
+
+            return 6;
+        }
+        case INS_ADC_INDY:
+        {
+            // get zeropage addr
+            Byte offset = mem->ReadByte(PC++);
+            // get the abs addr at zp
+            Byte lsb = mem->ReadByte(0x0000 + offset);
+            Byte msb = mem->ReadByte((0x0000 + offset + 1) & 0xFF);
+            Word addr = (Word(msb) << 8) + lsb;
+
+            // add y to abs addr
+            // set a to value located at final addr
+            Byte v2 = mem->ReadByte(addr + Y);
+            Byte v1 = A;
+
+            DO_ADD(v1,v2);
+            SET_ADD_FLAGS(v1,v2);
+
             if ((((addr & 0xFF) + Y ) & 0x100) == 0x100) {
                 return 6;
             }
