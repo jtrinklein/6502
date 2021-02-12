@@ -187,6 +187,15 @@ static constexpr Byte INS_BCS  = 0xB0; // branch if positive (Carry is set)
 static constexpr Byte INS_BVC  = 0x50; // branch if not equal (Overflow is clear)
 static constexpr Byte INS_BVS  = 0x70; // branch if positive (Overflow is set)
 
+/* AND instructions */
+static constexpr Byte INS_AND_IM   = 0x29;
+static constexpr Byte INS_AND_ZP   = 0x25;
+static constexpr Byte INS_AND_ZPX  = 0x35;
+static constexpr Byte INS_AND_ABS  = 0x2D;
+static constexpr Byte INS_AND_ABSX = 0x3D;
+static constexpr Byte INS_AND_ABSY = 0x39;
+static constexpr Byte INS_AND_INDX = 0x21;
+static constexpr Byte INS_AND_INDY = 0x31;
 
 
 #define SET_BIT_FLAGS(v) do {           \
@@ -923,6 +932,95 @@ u32 CPU::RunOneInstruction() {
                 return 3;
             }
             return 2;
+        }
+        case INS_AND_IM:
+        {
+            Byte val = mem->ReadByte(PC++);
+            A &=  val;
+            SET_LOAD_REG_FLAGS(A);
+            return 2;
+        }
+        case INS_AND_ABS:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            Byte val = mem->ReadByte(addr);
+            A &=  val;
+            SET_LOAD_REG_FLAGS(A);
+            return 4;
+        }
+        case INS_AND_ABSX:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            Byte val = mem->ReadByte(addr + X);
+            A &= val;
+
+            SET_LOAD_REG_FLAGS(A);
+            if ((((addr & 0xFF) + X ) & 0x100) == 0x100) {
+                return 5;
+            }
+            return 4;
+        }
+        case INS_AND_ABSY:
+        {
+            Word addr = mem->ReadWord(PC);
+            PC += 2;
+            Byte val = mem->ReadByte(addr + Y);
+            A &= val;
+
+            SET_LOAD_REG_FLAGS(A);
+            if ((((addr & 0xFF) + Y ) & 0x100) == 0x100) {
+                return 5;
+            }
+            return 4;
+        }
+        case INS_AND_ZP:
+        {
+            Word addr = 0x0000 + mem->ReadByte(PC++);
+            Byte val = mem->ReadByte(addr);
+            A &=  val;
+            SET_LOAD_REG_FLAGS(A);
+            return 3;
+        }
+        case INS_AND_ZPX:
+        {
+            Word addr = 0x0000 + (mem->ReadByte(PC++) + X) & 0xFF;
+            Byte val = mem->ReadByte(addr);
+            A &=  val;
+            SET_LOAD_REG_FLAGS(A);
+            return 4;
+        }
+        case INS_AND_INDX:
+        {
+            Byte offset = mem->ReadByte(PC++);
+            Word addr = 0x0000 + (X + offset) & 0xFF;
+            addr = mem->ReadWord(addr);
+            Byte val = mem->ReadByte(addr);
+            A &= val;
+
+            SET_LOAD_REG_FLAGS(A);
+            return 6;
+        }
+        case INS_AND_INDY:
+        {
+            // get zeropage addr
+            Byte offset = mem->ReadByte(PC++);
+            // get the abs addr at zp
+            Byte lsb = mem->ReadByte(0x0000 + offset);
+            Byte msb = mem->ReadByte((0x0000 + offset + 1) & 0xFF);
+            Word addr = (Word(msb) << 8) + lsb;
+
+            // add y to abs addr
+            // set a to value located at final addr
+            Byte val = mem->ReadByte(addr + Y);
+            A &= val;
+
+            SET_LOAD_REG_FLAGS(A);
+            if ((((addr & 0xFF) + Y ) & 0x100) == 0x100) {
+                return 6;
+            }
+            return 5;
         }
         default:
         {
