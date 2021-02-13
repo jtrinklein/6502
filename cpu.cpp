@@ -235,17 +235,36 @@ static constexpr Byte INS_ADC_INDY = 0x71;
 #define SET_ASL_FLAGS(v) SET_LOAD_REG_FLAGS(v)
 
 #define SET_ADD_FLAGS(v1,v2) do {                           \
-    Zero = ((v1+v2) & 0xFF) == 0;                             \
-    Negative = ((v1+v2) & 0x80) != 0;                         \
+    Zero = A == 0;                             \
+    Negative = (A & 0x80) != 0;                         \
     Overflow = (v1<0x80) && (v2<0x80) && ((v1+v2) >= 0x80); \
     } while(false)
 
-#define DO_ADD(v1,v2) do {      \
-    Byte c = Carry;             \
-    Word w1 = v1,w2 = v2;       \
-    w1 = w1+w2+c;               \
-    A = w1 & 0xFF;              \
-    Carry = (w1 & 0x0100) != 0; \
+#define DO_ADD(v1,v2) do {          \
+    Byte c = Carry;                 \
+    Carry = 0;                      \
+    if (DecimalMode) {              \
+        Byte lb1 = (v1&0x0F);       \
+        Byte lb2 = (v2&0x0F);       \
+        Byte lb = lb1 + lb2 + c;    \
+        if (lb > 0x09) {            \
+            lb += 0x06;             \
+        }                           \
+        Byte hb1 = (v1&0xF0)>>4;    \
+        Byte hb2 = (v2&0xF0)>>4;    \
+        Byte hc = (lb >> 4);        \
+        Byte hb = hb1 + hb2 ;    \
+        if ((hb+ hc) > 0x09) {            \
+            hb += 0x06;             \
+            Carry = 1;              \
+        }                           \
+        A = (hb << 4) + lb;         \
+    } else {                        \
+        Word w1 = v1,w2 = v2;       \
+        w1 = w1+w2+c;               \
+        A = w1 & 0xFF;              \
+        Carry = (w1 & 0x0100) != 0; \
+    }                               \
 }while(false)
 
 #define DO_LSR(x) do {          \
