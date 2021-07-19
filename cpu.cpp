@@ -217,6 +217,16 @@ static constexpr Byte INS_ADC_ABSY = 0x79;
 static constexpr Byte INS_ADC_INDX = 0x61;
 static constexpr Byte INS_ADC_INDY = 0x71;
 
+/* SBC - subtract with carry */
+static constexpr Byte INS_SBC_IM   = 0xE9;
+static constexpr Byte INS_SBC_ZP   = 0xE5;
+static constexpr Byte INS_SBC_ZPX  = 0xF5;
+static constexpr Byte INS_SBC_ABS  = 0xED;
+static constexpr Byte INS_SBC_ABSX = 0xFD;
+static constexpr Byte INS_SBC_ABSY = 0xF9;
+static constexpr Byte INS_SBC_INDX = 0xE1;
+static constexpr Byte INS_SBC_INDY = 0xF1;
+
 
 #define SET_BIT_FLAGS(v) do {           \
         Zero = (A & v) == 0;            \
@@ -249,6 +259,33 @@ static constexpr Byte INS_ADC_INDY = 0x71;
         Byte lb = lb1 + lb2 + c;    \
         if (lb > 0x09) {            \
             lb += 0x06;             \
+        }                           \
+        Byte hb1 = (v1&0xF0)>>4;    \
+        Byte hb2 = (v2&0xF0)>>4;    \
+        Byte hc = (lb >> 4);        \
+        Byte hb = hb1 + hb2 ;    \
+        if ((hb+ hc) > 0x09) {            \
+            hb += 0x06;             \
+            Carry = 1;              \
+        }                           \
+        A = (hb << 4) + lb;         \
+    } else {                        \
+        Word w1 = v1,w2 = v2;       \
+        w1 = w1+w2+c;               \
+        A = w1 & 0xFF;              \
+        Carry = (w1 & 0x0100) != 0; \
+    }                               \
+}while(false)
+
+#define DO_SUB(v1,v2) do {          \
+    Byte c = Carry;                 \
+    Carry = 0;                      \
+    if (DecimalMode) {              \
+        Byte lb1 = (v1&0x0F);       \
+        Byte lb2 = (v2&0x0F);       \
+        Byte lb = lb1 - lb2 - (1 - c);    \
+        if (lb > 0x09) {            \
+            lb -= 0x06;             \
         }                           \
         Byte hb1 = (v1&0xF0)>>4;    \
         Byte hb2 = (v2&0xF0)>>4;    \
